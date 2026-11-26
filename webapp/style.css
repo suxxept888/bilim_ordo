@@ -36,6 +36,24 @@ body {
   letter-spacing: 0.2px;
 }
 
+/* Кнопка «Назад» возле названия */
+.brand { display: flex; align-items: center; gap: 10px; }
+.back {
+  width: 34px; height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--white);
+  cursor: pointer;
+}
+.back[hidden] { display: none; }
+.back:hover { background: rgba(255, 255, 255, 0.24); }
+.back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
 main { padding: 0 16px 24px; }
 
 /* ---------- Поиск (продолжение шапки) ---------- */
@@ -238,6 +256,7 @@ button.primary {
     height: 68px;
   }
   .logo { font-size: 24px; }
+  .back { width: 40px; height: 40px; }
   .top-nav { display: flex; gap: 6px; }
   .top-nav a {
     color: rgba(255, 255, 255, 0.75);

@@ -144,21 +144,24 @@ const screens = {
 
 // ---------- Переходы между экранами ----------
 // Адреса: #home, #s-math (предмет), #t-math-0 (раздел), #teachers, #teacher, #lesson, #upload
+let backTo = null; // куда ведёт кнопка «Назад» с текущего экрана (null — на главной)
+
 function show() {
   const hash = location.hash.slice(1) || 'home';
-  let html, tab, nested = false;
+  let html, tab;
+  backTo = null;
 
   const sm = hash.match(/^s-([a-z]+)$/);
   const tm = hash.match(/^t-([a-z]+)-(\d+)$/);
 
   if (sm && findSubject(sm[1])) {
-    html = subjectScreen(findSubject(sm[1])); tab = 'home'; nested = true;
+    html = subjectScreen(findSubject(sm[1])); tab = 'home'; backTo = 'home';
   } else if (tm && findSubject(tm[1]) && findSubject(tm[1]).sections[+tm[2]]) {
-    html = sectionScreen(findSubject(tm[1]), +tm[2]); tab = 'home'; nested = true;
+    html = sectionScreen(findSubject(tm[1]), +tm[2]); tab = 'home'; backTo = 's-' + tm[1];
   } else if (screens[hash]) {
-    html = screens[hash](); tab = hash;
-    if (hash === 'teacher') { tab = 'teachers'; nested = true; }
-    if (hash === 'lesson') { tab = 'home'; nested = true; }
+    html = screens[hash](); tab = hash; backTo = 'home';
+    if (hash === 'teacher') { tab = 'teachers'; backTo = 'teachers'; }
+    if (hash === 'lesson') { tab = 'home'; }
   } else {
     html = homeScreen(); tab = 'home';
   }
@@ -167,11 +170,17 @@ function show() {
   document.querySelectorAll('a[data-tab]').forEach(a =>
     a.classList.toggle('active', a.dataset.tab === tab));
 
-  // Кнопка «Назад» Телеграма на вложенных экранах
-  if (tg && tg.BackButton) { nested ? tg.BackButton.show() : tg.BackButton.hide(); }
+  // Кнопка «←» возле названия и кнопка «Назад» Телеграма: видны везде, кроме главной
+  document.getElementById('back').hidden = !backTo;
+  if (tg && tg.BackButton) { backTo ? tg.BackButton.show() : tg.BackButton.hide(); }
 
   bind();
   window.scrollTo(0, 0);
+}
+
+// Возврат на экран уровнем выше: раздел → предмет → главная
+function goBack() {
+  if (backTo) location.hash = backTo;
 }
 
 function bind() {
@@ -190,6 +199,7 @@ function bind() {
   if (upload) upload.addEventListener('submit', e => e.preventDefault());
 }
 
-if (tg && tg.BackButton) tg.BackButton.onClick(() => history.back());
+document.getElementById('back').addEventListener('click', goBack);
+if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
 window.addEventListener('hashchange', show);
 show();
