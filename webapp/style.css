@@ -245,9 +245,10 @@ button.primary {
   /* Нижнее меню прячем, меню переезжает в шапку */
   .tabs { display: none; }
 
-  .top { padding: 0 32px; }
+  /* Отступ от края окна: 48px; содержимое растягивается до 1600px */
+  .top { padding: 0 48px; }
   .top-inner {
-    max-width: 1120px;
+    max-width: 1600px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -269,7 +270,7 @@ button.primary {
   .top-nav a:hover { color: var(--white); background: rgba(255, 255, 255, 0.08); }
   .top-nav a.active { color: var(--navy); background: var(--white); }
 
-  main { max-width: 1184px; margin: 0 auto; padding: 0 32px 64px; }
+  main { max-width: 1696px; margin: 0 auto; padding: 0 48px 64px; }
 
   /* Тёмно-синяя и цветные полосы растягиваются на всю ширину окна */
   .hero, .subject-hero {
