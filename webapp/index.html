@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bilim Ordo</title>
+  <!-- Библиотека Telegram для мини-приложений -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <span class="logo">Bilim Ordo</span>
+  </header>
+
+  <!-- Сюда app.js подставляет текущий экран -->
+  <main id="screen"></main>
+
+  <!-- Нижнее меню -->
+  <nav class="tabs">
+    <a href="#catalog" data-tab="catalog">Темы</a>
+    <a href="#teachers" data-tab="teachers">Преподаватели</a>
+    <a href="#upload" data-tab="upload">Загрузить урок</a>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
