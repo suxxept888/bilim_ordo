@@ -20,7 +20,7 @@ body {
   margin: 0;
   font: 500 16px/1.5 var(--font);
   color: var(--ink);
-  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); /* место под нижнее меню */
+  padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); /* место под нижнее меню */
 }
 
 /* ---------- Шапка ---------- */
@@ -84,6 +84,61 @@ body {
 .role span { color: var(--muted); font-size: 14px; }
 .role em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--navy-soft); text-transform: uppercase; letter-spacing: 0.6px; }
 .role:disabled { cursor: default; opacity: 0.75; }
+
+/* Кружок с первой буквой имени вместо фото */
+.avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--white);
+  color: var(--navy);
+  font-weight: 800;
+  font-size: 16px;
+}
+.avatar-lg { width: 64px; height: 64px; font-size: 28px; background: var(--navy); color: var(--white); flex: none; }
+.avatar-link { display: none; text-decoration: none; border-radius: 50%; }
+.avatar-link.active .avatar { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45); }
+
+/* Профиль */
+.profile { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+.who { display: grid; gap: 2px; min-width: 0; }
+.who strong { font-size: 20px; }
+.who span { color: var(--muted); }
+.who .badge {
+  justify-self: start;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+button.secondary {
+  font: inherit;
+  font-weight: 700;
+  margin-top: 24px;
+  width: 100%;
+  color: var(--navy);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 13px;
+  cursor: pointer;
+}
+.role:not(:disabled) { cursor: pointer; }
+.role:not(:disabled):hover { border-color: var(--navy-soft); }
+.empty a { color: var(--navy-soft); font-weight: 700; }
+
+/* Мой план */
+.notice {
+  background: #EAF7EF;
+  color: #1C5E33;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+}
 
 main { padding: 0 16px 24px; }
 
@@ -242,7 +297,7 @@ button.primary {
 }
 .note { font-size: 14px; color: var(--muted); }
 
-/* ---------- Нижнее меню ---------- */
+/* ---------- Нижнее меню (телефон) ---------- */
 .tabs {
   position: fixed;
   left: 0; right: 0; bottom: 0;
@@ -252,15 +307,23 @@ button.primary {
 }
 .tabs a {
   flex: 1;
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
   text-align: center;
-  padding: 14px 4px 12px;
-  font-size: 13px;
+  padding: 9px 2px 8px;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1.2;
   color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
   border-top: 3px solid transparent;
 }
+.tabs a svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.tabs a span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tabs a.active { color: var(--white); border-top-color: var(--white); }
+.tabs-2 a { font-size: 12px; }
 
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
 
@@ -304,6 +367,13 @@ button.primary {
   .top-nav a.cta:hover { background: #E6ECFA; }
   .top-nav a.cta.active { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5); }
   .top-login { display: none; }
+  .top-right { display: flex; align-items: center; }
+  .top-inner { gap: 16px; }
+  .top-inner .top-nav { margin-left: auto; }
+  .avatar-link { display: block; }
+  .profile + .note, .profile { max-width: 640px; }
+  button.secondary { width: auto; padding: 12px 28px; }
+  .plan { max-width: 640px; }
   .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 760px; gap: 18px; }
 
   main { max-width: 1696px; margin: 0 auto; padding: 0 48px 64px; }

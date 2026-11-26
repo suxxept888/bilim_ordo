@@ -1,6 +1,7 @@
 // Мини-приложение Bilim Ordo.
-// Сейчас: главная страница с предметами, поиск, страницы предметов и разделов.
-// Уроков, рейтингов и аккаунтов пока нет.
+// Сейчас: главная с предметами и поиском, страницы предметов и разделов,
+// гостевой режим и режим ученика (меню, «Мой план», профиль).
+// Настоящих аккаунтов, уроков, рейтингов и ИИ пока нет.
 
 const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) {
@@ -13,6 +14,81 @@ if (tg) {
 }
 
 let query = ''; // текст в строке поиска
+
+// ---------- Кто открыл приложение ----------
+// В Телеграме имя берём из Телеграма, в обычном браузере — тестовый ученик.
+const inTelegram = !!(tg && tg.initData);
+const tgUser = inTelegram && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+const user = {
+  firstName: (tgUser && tgUser.first_name) || 'Тестовый',
+  lastName: (tgUser && tgUser.last_name) || (tgUser ? '' : 'ученик'),
+  username: tgUser ? tgUser.username : null,
+};
+const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
+
+// ---------- Режим: гость или ученик ----------
+// Пока нет настоящих аккаунтов, режим хранится в памяти браузера на этом устройстве.
+function store(key, value) {
+  try {
+    if (value === undefined) return localStorage.getItem(key);
+    if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value);
+  } catch (e) { return null; }
+}
+let role = store('bo_role') === 'student' ? 'student' : 'guest';
+
+// Пункты меню для каждого режима
+const MENUS = {
+  guest: [
+    { tab: 'home', label: 'Главная', icon: 'home' },
+    { tab: 'login', label: 'Войти', icon: 'login', desktopOnly: true },
+    { tab: 'signup', label: 'Создать аккаунт', icon: 'userPlus', cta: true },
+  ],
+  student: [
+    { tab: 'home', label: 'Главная', icon: 'home' },
+    { tab: 'my', label: 'Мои уроки', icon: 'book' },
+    { tab: 'plan', label: 'Мой план', icon: 'plan' },
+    { tab: 'saved', label: 'Избранное', icon: 'star' },
+    { tab: 'profile', label: 'Профиль', icon: 'user', mobileOnly: true },
+  ],
+};
+
+const MENU_ICONS = {
+  home: '<path d="M4 11 12 4l8 7"/><path d="M6 10v10h12V10"/>',
+  login: '<path d="M14 4h5v16h-5"/><path d="M3 12h11M10 8l4 4-4 4"/>',
+  userPlus: '<circle cx="10" cy="8" r="4"/><path d="M3 20c1-4 4-6 7-6s4 1 5 2"/><path d="M19 14v6M16 17h6"/>',
+  book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/>',
+  plan: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="m9 15 2 2 4-4"/>',
+  star: '<path d="m12 3 2.8 5.8 6.2.9-4.5 4.4 1 6.2L12 17.4l-5.5 2.9 1-6.2L3 9.7l6.2-.9z"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+};
+
+function menuIcon(name) {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">${MENU_ICONS[name]}</svg>`;
+}
+
+// Рисует меню в шапке (компьютер), кнопку справа и нижнее меню (телефон)
+function renderMenus() {
+  const items = MENUS[role];
+  document.getElementById('top-nav').innerHTML = items
+    .filter(i => !i.mobileOnly)
+    .map(i => `<a href="#${i.tab}" data-tab="${i.tab}"${i.cta ? ' class="cta"' : ''}>${i.label}</a>`).join('');
+
+  document.getElementById('top-right').innerHTML = role === 'student'
+    ? `<a class="avatar-link" href="#profile" data-tab="profile" title="Профиль"><span class="avatar">${esc(user.firstName[0])}</span></a>`
+    : `<a class="top-login" href="#login" data-tab="login">Войти</a>`;
+
+  const tabs = items.filter(i => !i.desktopOnly);
+  const nav = document.getElementById('tabs');
+  nav.className = 'tabs tabs-' + tabs.length;
+  nav.innerHTML = tabs
+    .map(i => `<a href="#${i.tab}" data-tab="${i.tab}">${menuIcon(i.icon)}<span>${i.label}</span></a>`).join('');
+}
+
+function setRole(next) {
+  role = next;
+  store('bo_role', next === 'student' ? 'student' : null);
+  renderMenus();
+}
 
 // ---------- Помощники ----------
 function esc(s) {
@@ -105,10 +181,10 @@ function accountScreen(title, sub) {
     <h1>${title}</h1>
     <p class="sub">${sub}</p>
     <div class="roles">
-      <button class="role" type="button" disabled>
+      <button class="role" type="button" id="be-student">
         <strong>Я ученик</strong>
         <span>Смотреть уроки целиком и ставить оценки</span>
-        <em>Скоро</em>
+        <em>Войти как ученик →</em>
       </button>
       <button class="role" type="button" disabled>
         <strong>Я преподаватель</strong>
@@ -116,9 +192,77 @@ function accountScreen(title, sub) {
         <em>Скоро</em>
       </button>
     </div>
-    <p class="note">Аккаунты появятся на следующем шаге. Пока можно смотреть предметы и разделы без входа.</p>
+    <p class="note">Пока это тестовый вход: настоящие аккаунты появятся на следующем шаге.</p>
   `;
 }
+
+// ---------- Экраны ученика ----------
+const PLAN_GOALS = ['Сессия в вузе', 'ОРТ', 'Школьная программа', 'Для себя'];
+const PLAN_LEVELS = ['Начинаю с нуля', 'Знаю основы', 'Знаю хорошо, нужно повторить'];
+
+function option(list, selected) {
+  return list.map(v => `<option${v === selected ? ' selected' : ''}>${esc(v)}</option>`).join('');
+}
+
+const studentScreens = {
+  my: () => `
+    <h1>Мои уроки</h1>
+    <p class="sub">Здесь будут уроки, которые вы начали или прошли.</p>
+    <div class="empty">Вы ещё не начали ни одного урока.<br><a href="#home">Выбрать предмет</a></div>
+  `,
+
+  plan: () => {
+    let saved = {};
+    try { saved = JSON.parse(store('bo_plan') || '{}'); } catch (e) {}
+    return `
+      <h1>Мой план</h1>
+      <p class="sub">Ответьте на несколько вопросов, и ИИ-помощник составит план учёбы по неделям со ссылками на уроки.</p>
+      <form id="plan-form" class="plan">
+        <label>Что вы готовите?
+          <select id="p-goal">${option(PLAN_GOALS, saved.goal)}</select>
+        </label>
+        <label>Предмет
+          <select id="p-subject">${option(SUBJECTS.map(s => s.name), saved.subject)}</select>
+        </label>
+        <label>Ваш уровень сейчас
+          <select id="p-level">${option(PLAN_LEVELS, saved.level)}</select>
+        </label>
+        <label>К какому числу нужно успеть?
+          <input id="p-date" type="date" value="${esc(saved.date || '')}">
+        </label>
+        <label>Сколько часов в неделю готовы заниматься?
+          <input id="p-hours" type="number" min="1" max="60" placeholder="Например, 6" value="${esc(saved.hours || '')}">
+        </label>
+        <button class="primary" type="submit">Составить план</button>
+        <div class="notice" id="plan-note" ${saved.goal ? '' : 'hidden'}>
+          Ответы сохранены. ИИ-помощник подключим на следующем шаге, и здесь появится ваш план.
+        </div>
+      </form>
+    `;
+  },
+
+  saved: () => `
+    <h1>Избранное</h1>
+    <p class="sub">Сохраняйте уроки и преподавателей, чтобы быстро к ним вернуться.</p>
+    <div class="empty">Здесь пока пусто</div>
+  `,
+
+  profile: () => `
+    <h1>Профиль</h1>
+    <div class="profile">
+      <span class="avatar avatar-lg">${esc(user.firstName[0])}</span>
+      <div class="who">
+        <strong>${esc(fullName)}</strong>
+        ${user.username ? `<span>@${esc(user.username)}</span>` : ''}
+        <span class="badge">Ученик</span>
+      </div>
+    </div>
+    ${inTelegram ? '' : '<p class="note">Тестовый режим: приложение открыто не в Телеграме.</p>'}
+    <h2>Мои оценки</h2>
+    <div class="empty">Вы ещё не оценили ни одного урока</div>
+    <button class="secondary" type="button" id="logout">Выйти</button>
+  `,
+};
 
 const screens = {
   login: () => accountScreen('Вход', 'Войдите, чтобы смотреть уроки целиком и ставить оценки.'),
@@ -167,7 +311,8 @@ const teacherScreens = {
 };
 
 // ---------- Переходы между экранами ----------
-// Адреса: #home, #s-math (предмет), #t-math-0 (раздел), #login, #signup, #teacher, #lesson
+// Адреса: #home, #s-math (предмет), #t-math-0 (раздел), #login, #signup, #teacher, #lesson,
+// для ученика: #my, #plan, #saved, #profile
 let backTo = null; // куда ведёт кнопка «Назад» с текущего экрана (null — на главной)
 
 function show() {
@@ -182,6 +327,12 @@ function show() {
     html = subjectScreen(findSubject(sm[1])); tab = 'home'; backTo = 'home';
   } else if (tm && findSubject(tm[1]) && findSubject(tm[1]).sections[+tm[2]]) {
     html = sectionScreen(findSubject(tm[1]), +tm[2]); tab = 'home'; backTo = 's-' + tm[1];
+  } else if (studentScreens[hash] && role === 'student') {
+    html = studentScreens[hash](); tab = hash;
+  } else if (studentScreens[hash]) {
+    location.replace('#login'); return; // разделы ученика доступны только после входа
+  } else if ((hash === 'login' || hash === 'signup') && role === 'student') {
+    location.replace('#home'); return;  // ученик уже вошёл
   } else if (screens[hash]) {
     html = screens[hash](); tab = hash; backTo = 'home';
     if (hash === 'teacher' || hash === 'lesson') tab = 'home';
@@ -218,6 +369,32 @@ function bind() {
       input.blur(); // прячем клавиатуру
     });
   }
+  const beStudent = document.getElementById('be-student');
+  if (beStudent) beStudent.addEventListener('click', () => {
+    setRole('student');
+    location.hash = 'home';
+  });
+
+  const logout = document.getElementById('logout');
+  if (logout) logout.addEventListener('click', () => {
+    setRole('guest');
+    location.hash = 'home';
+  });
+
+  const plan = document.getElementById('plan-form');
+  if (plan) plan.addEventListener('submit', e => {
+    e.preventDefault();
+    const answers = {
+      goal: document.getElementById('p-goal').value,
+      subject: document.getElementById('p-subject').value,
+      level: document.getElementById('p-level').value,
+      date: document.getElementById('p-date').value,
+      hours: document.getElementById('p-hours').value,
+    };
+    store('bo_plan', JSON.stringify(answers));
+    document.getElementById('plan-note').hidden = false;
+  });
+
   const upload = document.getElementById('upload-form');
   if (upload) upload.addEventListener('submit', e => e.preventDefault());
 }
@@ -225,4 +402,5 @@ function bind() {
 document.getElementById('back').addEventListener('click', goBack);
 if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
 window.addEventListener('hashchange', show);
+renderMenus();
 show();
