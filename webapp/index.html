@@ -12,13 +12,21 @@
 </head>
 <body>
   <header class="top">
-    <a class="logo" href="#home">Bilim Ordo</a>
+    <div class="top-inner">
+      <a class="logo" href="#home">Bilim Ordo</a>
+      <!-- Меню в шапке: видно только на компьютере -->
+      <nav class="top-nav">
+        <a href="#home" data-tab="home">Главная</a>
+        <a href="#teachers" data-tab="teachers">Преподаватели</a>
+        <a href="#upload" data-tab="upload">Загрузить урок</a>
+      </nav>
+    </div>
   </header>
 
   <!-- Сюда app.js подставляет текущий экран -->
   <main id="screen"></main>
 
-  <!-- Нижнее меню -->
+  <!-- Нижнее меню: видно только на телефоне -->
   <nav class="tabs">
     <a href="#home" data-tab="home">Главная</a>
     <a href="#teachers" data-tab="teachers">Преподаватели</a>

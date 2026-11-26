@@ -71,7 +71,7 @@ function subjectCards() {
 
 function subjectScreen(s) {
   return `
-    <section class="subject-hero" style="background:${s.color};color:${s.text}">
+    <section class="subject-hero" style="--band:${s.color};background:${s.color};color:${s.text}">
       <span class="icon">${icon(s)}</span>
       <div>
         <h1>${esc(s.name)}</h1>
@@ -164,7 +164,7 @@ function show() {
   }
 
   document.getElementById('screen').innerHTML = html;
-  document.querySelectorAll('.tabs a').forEach(a =>
+  document.querySelectorAll('a[data-tab]').forEach(a =>
     a.classList.toggle('active', a.dataset.tab === tab));
 
   // Кнопка «Назад» Телеграма на вложенных экранах
