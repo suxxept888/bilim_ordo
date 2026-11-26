@@ -131,6 +131,13 @@ button.secondary {
 .role:not(:disabled):hover { border-color: var(--navy-soft); }
 .empty a { color: var(--navy-soft); font-weight: 700; }
 
+/* Вход */
+.login { display: grid; gap: 14px; }
+.error { margin: 0; color: #B3261E; font-weight: 600; font-size: 14px; }
+.note a { color: var(--navy-soft); font-weight: 700; }
+.actions { display: grid; gap: 10px; margin-top: 24px; }
+.actions button.secondary { margin-top: 0; }
+
 /* Мой план */
 .notice {
   background: #EAF7EF;
@@ -373,7 +380,8 @@ button.primary {
   .avatar-link { display: block; }
   .profile + .note, .profile { max-width: 640px; }
   button.secondary { width: auto; padding: 12px 28px; }
-  .plan { max-width: 640px; }
+  .plan, .login { max-width: 480px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
   .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 760px; gap: 18px; }
 
   main { max-width: 1696px; margin: 0 auto; padding: 0 48px 64px; }

@@ -1,7 +1,7 @@
 // Мини-приложение Bilim Ordo.
 // Сейчас: главная с предметами и поиском, страницы предметов и разделов,
-// гостевой режим и режим ученика (меню, «Мой план», профиль).
-// Настоящих аккаунтов, уроков, рейтингов и ИИ пока нет.
+// вход по логину и паролю, режимы гостя, ученика и преподавателя.
+// Настоящих аккаунтов с сервером, уроков, рейтингов и ИИ пока нет.
 
 const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) {
@@ -19,22 +19,46 @@ let query = ''; // текст в строке поиска
 // В Телеграме имя берём из Телеграма, в обычном браузере — тестовый ученик.
 const inTelegram = !!(tg && tg.initData);
 const tgUser = inTelegram && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
-const user = {
-  firstName: (tgUser && tgUser.first_name) || 'Тестовый',
-  lastName: (tgUser && tgUser.last_name) || (tgUser ? '' : 'ученик'),
-  username: tgUser ? tgUser.username : null,
-};
-const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
 
-// ---------- Режим: гость или ученик ----------
-// Пока нет настоящих аккаунтов, режим хранится в памяти браузера на этом устройстве.
 function store(key, value) {
   try {
     if (value === undefined) return localStorage.getItem(key);
     if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value);
   } catch (e) { return null; }
 }
-let role = store('bo_role') === 'student' ? 'student' : 'guest';
+
+// ---------- Вход (демо) ----------
+// ВНИМАНИЕ: это демо-замок без сервера. Код сайта открыт, поэтому настоящей защиты здесь нет.
+// Пароли хранятся только в виде отпечатка SHA-256 (строка «bilim_ordo:логин:пароль»).
+// Настоящие аккаунты появятся вместе с сервером и базой данных.
+const ACCOUNTS = {
+  suxxept: '9aaef6c6abf387449d8bdc9601b8ba39e1dc5818a0819714bba4823c536dd631',
+};
+
+async function sha256(text) {
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkLogin(login, password) {
+  login = login.trim().toLowerCase();
+  if (!ACCOUNTS[login]) return false;
+  return (await sha256(`bilim_ordo:${login}:${password}`)) === ACCOUNTS[login];
+}
+
+// Кто вошёл (логин) и в какой роли. Хранится в памяти браузера на этом устройстве.
+let account = store('bo_account');
+let role = account && ['student', 'teacher'].includes(store('bo_role')) ? store('bo_role') : 'guest';
+
+// Имя: из Телеграма, если открыто там; иначе — логин
+function currentUser() {
+  return {
+    firstName: (tgUser && tgUser.first_name) || account || 'Гость',
+    lastName: (tgUser && tgUser.last_name) || '',
+    username: tgUser ? tgUser.username : null,
+  };
+}
 
 // Пункты меню для каждого режима
 const MENUS = {
@@ -50,6 +74,12 @@ const MENUS = {
     { tab: 'saved', label: 'Избранное', icon: 'star' },
     { tab: 'profile', label: 'Профиль', icon: 'user', mobileOnly: true },
   ],
+  teacher: [
+    { tab: 'home', label: 'Главная', icon: 'home' },
+    { tab: 'tmy', label: 'Мои уроки', icon: 'book' },
+    { tab: 'upload', label: 'Загрузить урок', icon: 'upload' },
+    { tab: 'profile', label: 'Профиль', icon: 'user', mobileOnly: true },
+  ],
 };
 
 const MENU_ICONS = {
@@ -60,6 +90,7 @@ const MENU_ICONS = {
   plan: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="m9 15 2 2 4-4"/>',
   star: '<path d="m12 3 2.8 5.8 6.2.9-4.5 4.4 1 6.2L12 17.4l-5.5 2.9 1-6.2L3 9.7l6.2-.9z"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/>',
 };
 
 function menuIcon(name) {
@@ -73,8 +104,8 @@ function renderMenus() {
     .filter(i => !i.mobileOnly)
     .map(i => `<a href="#${i.tab}" data-tab="${i.tab}"${i.cta ? ' class="cta"' : ''}>${i.label}</a>`).join('');
 
-  document.getElementById('top-right').innerHTML = role === 'student'
-    ? `<a class="avatar-link" href="#profile" data-tab="profile" title="Профиль"><span class="avatar">${esc(user.firstName[0])}</span></a>`
+  document.getElementById('top-right').innerHTML = role !== 'guest'
+    ? `<a class="avatar-link" href="#profile" data-tab="profile" title="Профиль"><span class="avatar">${esc(currentUser().firstName[0].toUpperCase())}</span></a>`
     : `<a class="top-login" href="#login" data-tab="login">Войти</a>`;
 
   const tabs = items.filter(i => !i.desktopOnly);
@@ -86,8 +117,14 @@ function renderMenus() {
 
 function setRole(next) {
   role = next;
-  store('bo_role', next === 'student' ? 'student' : null);
+  store('bo_role', next === 'guest' ? null : next);
   renderMenus();
+}
+
+function logout() {
+  account = null;
+  store('bo_account', null);
+  setRole('guest');
 }
 
 // ---------- Помощники ----------
@@ -175,24 +212,49 @@ function sectionScreen(s, i) {
   `;
 }
 
-// Экран выбора роли для входа и регистрации (пока заготовка)
-function accountScreen(title, sub) {
+// ---------- Вход, выбор роли, регистрация ----------
+function loginScreen() {
   return `
-    <h1>${title}</h1>
-    <p class="sub">${sub}</p>
+    <h1>Вход</h1>
+    <p class="sub">Войдите, чтобы смотреть уроки целиком и ставить оценки.</p>
+    <form id="login-form" class="login" autocomplete="on">
+      <label>Логин
+        <input id="l-login" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      </label>
+      <label>Пароль
+        <input id="l-pass" type="password" autocomplete="current-password" required>
+      </label>
+      <p class="error" id="l-error" hidden>Неверный логин или пароль</p>
+      <button class="primary" type="submit">Войти</button>
+    </form>
+    <p class="note">Нет аккаунта? <a href="#signup">Создать аккаунт</a></p>
+  `;
+}
+
+function chooseScreen() {
+  return `
+    <h1>Как войти?</h1>
+    <p class="sub">Вы вошли как <strong>${esc(account)}</strong>. Выберите роль, её можно сменить в профиле.</p>
     <div class="roles">
-      <button class="role" type="button" id="be-student">
-        <strong>Я ученик</strong>
-        <span>Смотреть уроки целиком и ставить оценки</span>
-        <em>Войти как ученик →</em>
+      <button class="role" type="button" data-role="student">
+        <strong>Как ученик</strong>
+        <span>Смотреть уроки, составлять план учёбы, ставить оценки</span>
+        <em>Войти →</em>
       </button>
-      <button class="role" type="button" disabled>
-        <strong>Я преподаватель</strong>
+      <button class="role" type="button" data-role="teacher">
+        <strong>Как преподаватель</strong>
         <span>Публиковать уроки и привлекать учеников</span>
-        <em>Скоро</em>
+        <em>Войти →</em>
       </button>
     </div>
-    <p class="note">Пока это тестовый вход: настоящие аккаунты появятся на следующем шаге.</p>
+  `;
+}
+
+function signupScreen() {
+  return `
+    <h1>Создать аккаунт</h1>
+    <p class="sub">Регистрация скоро появится. Она заработает вместе с базой данных.</p>
+    <div class="empty">Уже есть аккаунт? <a href="#login">Войти</a></div>
   `;
 }
 
@@ -247,27 +309,34 @@ const studentScreens = {
     <div class="empty">Здесь пока пусто</div>
   `,
 
-  profile: () => `
-    <h1>Профиль</h1>
-    <div class="profile">
-      <span class="avatar avatar-lg">${esc(user.firstName[0])}</span>
-      <div class="who">
-        <strong>${esc(fullName)}</strong>
-        ${user.username ? `<span>@${esc(user.username)}</span>` : ''}
-        <span class="badge">Ученик</span>
-      </div>
-    </div>
-    ${inTelegram ? '' : '<p class="note">Тестовый режим: приложение открыто не в Телеграме.</p>'}
-    <h2>Мои оценки</h2>
-    <div class="empty">Вы ещё не оценили ни одного урока</div>
-    <button class="secondary" type="button" id="logout">Выйти</button>
-  `,
 };
 
-const screens = {
-  login: () => accountScreen('Вход', 'Войдите, чтобы смотреть уроки целиком и ставить оценки.'),
+// Профиль: общий для ученика и преподавателя
+function profileScreen() {
+  const u = currentUser();
+  const name = [u.firstName, u.lastName].filter(Boolean).join(' ');
+  const other = role === 'student' ? 'teacher' : 'student';
+  return `
+    <h1>Профиль</h1>
+    <div class="profile">
+      <span class="avatar avatar-lg">${esc(u.firstName[0].toUpperCase())}</span>
+      <div class="who">
+        <strong>${esc(name)}</strong>
+        <span>Логин: ${esc(account)}${u.username ? ` · @${esc(u.username)}` : ''}</span>
+        <span class="badge">${role === 'student' ? 'Ученик' : 'Преподаватель'}</span>
+      </div>
+    </div>
+    ${role === 'student'
+      ? '<h2>Мои оценки</h2><div class="empty">Вы ещё не оценили ни одного урока</div>'
+      : '<h2>Мой рейтинг</h2><div class="empty">Рейтинг появится, когда ученики оценят ваши уроки</div>'}
+    <div class="actions">
+      <button class="secondary" type="button" data-role="${other}">Сменить роль: ${other === 'student' ? 'ученик' : 'преподаватель'}</button>
+      <button class="secondary" type="button" id="logout">Выйти</button>
+    </div>
+  `;
+}
 
-  signup: () => accountScreen('Создать аккаунт', 'Выберите, кто вы.'),
+const screens = {
 
   teacher: () => `
     <h1>Преподаватель</h1>
@@ -286,8 +355,14 @@ const screens = {
 
 };
 
-// Экраны преподавателя: откроются после входа в аккаунт преподавателя
+// ---------- Экраны преподавателя ----------
 const teacherScreens = {
+  tmy: () => `
+    <h1>Мои уроки</h1>
+    <p class="sub">Уроки, которые вы опубликовали. Здесь будут их просмотры и оценки учеников.</p>
+    <div class="empty">Вы ещё не опубликовали ни одного урока.<br><a href="#upload">Загрузить первый урок</a></div>
+  `,
+
   upload: () => `
     <h1>Загрузить урок</h1>
     <p class="sub">Для преподавателей. Урок состоит из видео и текста.</p>
@@ -312,7 +387,7 @@ const teacherScreens = {
 
 // ---------- Переходы между экранами ----------
 // Адреса: #home, #s-math (предмет), #t-math-0 (раздел), #login, #signup, #teacher, #lesson,
-// для ученика: #my, #plan, #saved, #profile
+// ученик: #my, #plan, #saved, #profile; преподаватель: #tmy, #upload, #profile
 let backTo = null; // куда ведёт кнопка «Назад» с текущего экрана (null — на главной)
 
 function show() {
@@ -327,12 +402,18 @@ function show() {
     html = subjectScreen(findSubject(sm[1])); tab = 'home'; backTo = 'home';
   } else if (tm && findSubject(tm[1]) && findSubject(tm[1]).sections[+tm[2]]) {
     html = sectionScreen(findSubject(tm[1]), +tm[2]); tab = 'home'; backTo = 's-' + tm[1];
-  } else if (studentScreens[hash] && role === 'student') {
+  } else if (hash === 'login' || hash === 'signup') {
+    if (role !== 'guest') { location.replace('#home'); return; }   // уже вошли
+    html = !account ? (hash === 'login' ? loginScreen() : signupScreen()) : chooseScreen();
+    tab = hash; backTo = 'home';
+  } else if (hash === 'profile' && role !== 'guest') {
+    html = profileScreen(); tab = 'profile';
+  } else if (role === 'student' && studentScreens[hash]) {
     html = studentScreens[hash](); tab = hash;
-  } else if (studentScreens[hash]) {
-    location.replace('#login'); return; // разделы ученика доступны только после входа
-  } else if ((hash === 'login' || hash === 'signup') && role === 'student') {
-    location.replace('#home'); return;  // ученик уже вошёл
+  } else if (role === 'teacher' && teacherScreens[hash]) {
+    html = teacherScreens[hash](); tab = hash;
+  } else if (studentScreens[hash] || teacherScreens[hash] || hash === 'profile') {
+    location.replace(role === 'guest' ? '#login' : '#home'); return; // раздел другой роли или нужен вход
   } else if (screens[hash]) {
     html = screens[hash](); tab = hash; backTo = 'home';
     if (hash === 'teacher' || hash === 'lesson') tab = 'home';
@@ -369,16 +450,34 @@ function bind() {
       input.blur(); // прячем клавиатуру
     });
   }
-  const beStudent = document.getElementById('be-student');
-  if (beStudent) beStudent.addEventListener('click', () => {
-    setRole('student');
-    location.hash = 'home';
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) loginForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const login = document.getElementById('l-login').value;
+    const ok = await checkLogin(login, document.getElementById('l-pass').value);
+    if (!ok) {
+      document.getElementById('l-error').hidden = false;
+      document.getElementById('l-pass').value = '';
+      return;
+    }
+    account = login.trim().toLowerCase();
+    store('bo_account', account);
+    show(); // покажет выбор роли
   });
 
-  const logout = document.getElementById('logout');
-  if (logout) logout.addEventListener('click', () => {
-    setRole('guest');
+  // Кнопки выбора и смены роли
+  document.querySelectorAll('[data-role]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      setRole(btn.dataset.role);
+      location.hash = 'home';
+      show();
+    }));
+
+  const logoutBtn = document.getElementById('logout');
+  if (logoutBtn) logoutBtn.addEventListener('click', () => {
+    logout();
     location.hash = 'home';
+    show();
   });
 
   const plan = document.getElementById('plan-form');
