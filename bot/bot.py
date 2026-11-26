@@ -59,7 +59,11 @@ def main():
     if not BOT_TOKEN or not WEBAPP_URL:
         raise SystemExit("Заполните BOT_TOKEN и WEBAPP_URL в файле bot/.env")
 
-    me = call("getMe", {})["result"]
+    try:
+        me = call("getMe", {})["result"]
+    except urllib.error.HTTPError:
+        raise SystemExit("Telegram не принял токен. Проверьте строку BOT_TOKEN в bot/.env: "
+                         "токен должен быть вставлен один раз, без пробелов и кавычек.")
     print(f"Бот @{me['username']} запущен. Остановить: Ctrl+C")
 
     offset = 0
