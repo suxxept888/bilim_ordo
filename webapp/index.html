@@ -6,11 +6,13 @@
   <title>Bilim Ordo</title>
   <!-- Библиотека Telegram для мини-приложений -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
-    <span class="logo">Bilim Ordo</span>
+    <a class="logo" href="#home">Bilim Ordo</a>
   </header>
 
   <!-- Сюда app.js подставляет текущий экран -->
@@ -18,11 +20,12 @@
 
   <!-- Нижнее меню -->
   <nav class="tabs">
-    <a href="#catalog" data-tab="catalog">Темы</a>
+    <a href="#home" data-tab="home">Главная</a>
     <a href="#teachers" data-tab="teachers">Преподаватели</a>
     <a href="#upload" data-tab="upload">Загрузить урок</a>
   </nav>
 
+  <script src="data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
