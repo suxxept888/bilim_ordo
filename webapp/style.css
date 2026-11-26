@@ -54,6 +54,37 @@ body {
 .back:hover { background: rgba(255, 255, 255, 0.24); }
 .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 
+/* Шапка: название слева, «Войти» справа */
+.top-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.top-login {
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+}
+.top-login.active { background: var(--white); color: var(--navy); }
+
+/* Выбор роли на экранах входа и регистрации */
+.roles { display: grid; gap: 12px; margin-top: 8px; }
+.role {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+}
+.role strong { font-size: 18px; }
+.role span { color: var(--muted); font-size: 14px; }
+.role em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--navy-soft); text-transform: uppercase; letter-spacing: 0.6px; }
+.role:disabled { cursor: default; opacity: 0.75; }
+
 main { padding: 0 16px 24px; }
 
 /* ---------- Поиск (продолжение шапки) ---------- */
@@ -269,6 +300,11 @@ button.primary {
   }
   .top-nav a:hover { color: var(--white); background: rgba(255, 255, 255, 0.08); }
   .top-nav a.active { color: var(--navy); background: var(--white); }
+  .top-nav a.cta { color: var(--navy); background: var(--white); margin-left: 6px; }
+  .top-nav a.cta:hover { background: #E6ECFA; }
+  .top-nav a.cta.active { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5); }
+  .top-login { display: none; }
+  .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 760px; gap: 18px; }
 
   main { max-width: 1696px; margin: 0 auto; padding: 0 48px 64px; }
 
@@ -286,6 +322,7 @@ button.primary {
   .search button { padding: 0 32px; font-size: 17px; }
 
   h1 { font-size: 34px; }
+  main > h1:first-child { margin-top: 40px; }
   h2 { font-size: 24px; margin: 40px 0 18px; }
 
   /* 3 карточки в ряд, крупнее */

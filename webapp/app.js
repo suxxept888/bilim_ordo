@@ -99,11 +99,31 @@ function sectionScreen(s, i) {
   `;
 }
 
+// Экран выбора роли для входа и регистрации (пока заготовка)
+function accountScreen(title, sub) {
+  return `
+    <h1>${title}</h1>
+    <p class="sub">${sub}</p>
+    <div class="roles">
+      <button class="role" type="button" disabled>
+        <strong>Я ученик</strong>
+        <span>Смотреть уроки целиком и ставить оценки</span>
+        <em>Скоро</em>
+      </button>
+      <button class="role" type="button" disabled>
+        <strong>Я преподаватель</strong>
+        <span>Публиковать уроки и привлекать учеников</span>
+        <em>Скоро</em>
+      </button>
+    </div>
+    <p class="note">Аккаунты появятся на следующем шаге. Пока можно смотреть предметы и разделы без входа.</p>
+  `;
+}
+
 const screens = {
-  teachers: () => `
-    <h1>Преподаватели</h1>
-    <div class="empty">Преподавателей пока нет</div>
-  `,
+  login: () => accountScreen('Вход', 'Войдите, чтобы смотреть уроки целиком и ставить оценки.'),
+
+  signup: () => accountScreen('Создать аккаунт', 'Выберите, кто вы.'),
 
   teacher: () => `
     <h1>Преподаватель</h1>
@@ -120,6 +140,10 @@ const screens = {
     <div class="empty">Здесь будет текст урока</div>
   `,
 
+};
+
+// Экраны преподавателя: откроются после входа в аккаунт преподавателя
+const teacherScreens = {
   upload: () => `
     <h1>Загрузить урок</h1>
     <p class="sub">Для преподавателей. Урок состоит из видео и текста.</p>
@@ -143,7 +167,7 @@ const screens = {
 };
 
 // ---------- Переходы между экранами ----------
-// Адреса: #home, #s-math (предмет), #t-math-0 (раздел), #teachers, #teacher, #lesson, #upload
+// Адреса: #home, #s-math (предмет), #t-math-0 (раздел), #login, #signup, #teacher, #lesson
 let backTo = null; // куда ведёт кнопка «Назад» с текущего экрана (null — на главной)
 
 function show() {
@@ -160,8 +184,7 @@ function show() {
     html = sectionScreen(findSubject(tm[1]), +tm[2]); tab = 'home'; backTo = 's-' + tm[1];
   } else if (screens[hash]) {
     html = screens[hash](); tab = hash; backTo = 'home';
-    if (hash === 'teacher') { tab = 'teachers'; backTo = 'teachers'; }
-    if (hash === 'lesson') { tab = 'home'; }
+    if (hash === 'teacher' || hash === 'lesson') tab = 'home';
   } else {
     html = homeScreen(); tab = 'home';
   }

@@ -8,8 +8,8 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap">
-  <!-- ?v=6 — номер версии: при изменении файлов увеличивайте его, чтобы браузер не показывал старую копию -->
-  <link rel="stylesheet" href="style.css?v=6">
+  <!-- ?v=7 — номер версии: при изменении файлов увеличивайте его, чтобы браузер не показывал старую копию -->
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <header class="top">
@@ -23,9 +23,11 @@
       <!-- Меню в шапке: видно только на компьютере -->
       <nav class="top-nav">
         <a href="#home" data-tab="home">Главная</a>
-        <a href="#teachers" data-tab="teachers">Преподаватели</a>
-        <a href="#upload" data-tab="upload">Загрузить урок</a>
+        <a href="#login" data-tab="login">Войти</a>
+        <a class="cta" href="#signup" data-tab="signup">Создать аккаунт</a>
       </nav>
+      <!-- «Войти» в шапке: видно только на телефоне -->
+      <a class="top-login" href="#login" data-tab="login">Войти</a>
     </div>
   </header>
 
@@ -35,11 +37,10 @@
   <!-- Нижнее меню: видно только на телефоне -->
   <nav class="tabs">
     <a href="#home" data-tab="home">Главная</a>
-    <a href="#teachers" data-tab="teachers">Преподаватели</a>
-    <a href="#upload" data-tab="upload">Загрузить урок</a>
+    <a href="#signup" data-tab="signup">Создать аккаунт</a>
   </nav>
 
-  <script src="data.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="data.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
